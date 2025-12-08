@@ -1,53 +1,64 @@
-"use client";
-
 import { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import SearchBar from "../SearchBar/SearchBar";
-import { toast } from "react-hot-toast";
-import { Toaster } from "react-hot-toast";
-
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        {children}
-        <Toaster position="top-right" />
-      </body>
-    </html>
-  );
-}
+import MovieGrid from "../MovieGrid/MovieGrid";
+import Loader from "../Loader/Loader";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import MovieModal from "../MovieModal/MovieModal";
+import { fetchMovies } from "../../services/movieService";
+import { Movie } from "../../types/movie";
 
 export default function App() {
-  const [movies, setMovies] = useState([]);
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  async function fetchMovies(query) {
+  async function handleSearch(query: string): Promise<void> {
     setMovies([]);
+    setError(false);
+    setLoading(true);
 
     try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/search/movie?api_key=YOUR_KEY&query=${query}`
-      );
-      const data = await res.json();
+      const results = await fetchMovies(query);
 
-      if (!data.results || data.results.length === 0) {
+      if (results.length === 0) {
         toast("No movies found for your request.");
-        return;
       }
 
-      setMovies(data.results);
+      setMovies(results);
     } catch (err) {
-      toast.error("Error fetching data");
+      setError(true);
+      toast.error("There was an error, please try again...");
+    } finally {
+      setLoading(false);
     }
+  }
+
+  function handleMovieSelect(movie: Movie): void {
+    setSelectedMovie(movie);
+  }
+
+  function handleCloseModal(): void {
+    setSelectedMovie(null);
   }
 
   return (
     <>
-      <SearchBar onSubmit={fetchMovies} />
+      <Toaster position="top-right" />
+      <SearchBar onSubmit={handleSearch} />
 
       <main>
-        {movies.map((movie) => (
-          <p key={movie.id}>{movie.title}</p>
-        ))}
+        {loading && <Loader />}
+        {error && <ErrorMessage />}
+        {!loading && !error && movies.length > 0 && (
+          <MovieGrid movies={movies} onSelect={handleMovieSelect} />
+        )}
       </main>
+
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
+      )}
     </>
   );
 }
