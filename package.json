@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:gh": "vite build --base=/03-react-movies/",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist"
   },
