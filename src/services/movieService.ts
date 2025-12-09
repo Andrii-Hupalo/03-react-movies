@@ -19,8 +19,7 @@ const axiosInstance = axios.create({
 });
 
 export async function fetchMovies(query: string): Promise<Movie[]> {
-  const response: AxiosResponse<TMDBResponse> = await axiosInstance.get(
-    "/search/movie",
+  const response = await axiosInstance.get<TMDBResponse> ("/search/movie",
     {
       params: {
         query,
